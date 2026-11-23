@@ -186,12 +186,15 @@ class FruitNinjaEnv(gym.Env):
 
     # ------------------------------------------------------------------ rewards
     def _game_bonus(self, k: int) -> float:
-        """Bonus the 'real' game score would give (used for the score metric)."""
-        return self.rw.combo_bonus_scale * k if k >= 3 else 0.0
+        """Fixed 'game score' bonus used ONLY for the score metric. It ignores RewardConfig,
+        so `score` stays comparable between runs that use different reward values."""
+        return float(k) if k >= 3 else 0.0
 
     def _combo_bonus(self, k: int) -> float:
-        """Training bonus = game bonus + optional shaping for 2-fruit swipes."""
-        return self._game_bonus(k) + (self.rw.combo_bonus_k2 if k == 2 else 0.0)
+        """Training-reward bonus: scale * k for k >= 3, plus optional shaping for k == 2."""
+        if k >= 3:
+            return self.rw.combo_bonus_scale * k
+        return self.rw.combo_bonus_k2 if k == 2 else 0.0
 
     # ------------------------------------------------------------------ internals
     def _execute_swipe(self, p0, p1):
